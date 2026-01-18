@@ -2,11 +2,16 @@
 
 @theme {
   /* Brand Colors - Playful but Premium */
-  --color-primary: #3b82f6;    /* Bright Blue */
-  --color-secondary: #fbbf24;  /* Toy Yellow */
-  --color-accent: #10b981;     /* Mint Green */
-  --color-background: #f8fafc; /* Soft Grey-White */
-  --color-foreground: #0f172a; /* Deep Navy for text */
+  --color-primary: #3b82f6;
+  /* Bright Blue */
+  --color-secondary: #fbbf24;
+  /* Toy Yellow */
+  --color-accent: #10b981;
+  /* Mint Green */
+  --color-background: #f8fafc;
+  /* Soft Grey-White */
+  --color-foreground: #0f172a;
+  /* Deep Navy for text */
 
   /* Layout Spacing & Sizing */
   --spacing-container-max: 1280px;
@@ -17,6 +22,28 @@
 }
 
 @layer base {
+
+
+  header {
+    @apply sticky top-0 z-50 backdrop-blur-md bg-white/30 border-b border-white/20;
+
+    nav {
+      @apply flex flex-row justify-between mx-auto container sm:px-10 px-5 py-4;
+    }
+
+    .logo {
+      @apply flex flex-row items-center gap-2;
+
+      p {
+        @apply text-xl font-bold italic max-sm:hidden;
+      }
+    }
+
+    ul {
+      @apply flex flex-row items-center gap-6;
+    }
+  }
+
   body {
     /* v4 allows referencing variables directly in @apply */
     @apply bg-background text-foreground antialiased;
@@ -25,16 +52,28 @@
   }
 
   /* Professional Typography Scale */
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     @apply font-bold tracking-tight text-slate-900;
   }
 
-  h1 { @apply text-4xl md:text-6xl mb-6; }
-  h2 { @apply text-3xl md:text-4xl mb-4; }
-  p  { @apply leading-relaxed text-slate-600; }
+  h1 {
+    @apply text-4xl md:text-6xl mb-6;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl mb-4;
+  }
+
+  p {
+    @apply leading-relaxed text-slate-600;
+  }
 }
 
 @layer components {
+
   /* Container that keeps everything aligned */
   .main-container {
     @apply mx-auto px-4 md:px-8;
@@ -43,14 +82,47 @@
 
   /* The "Kids World" Buttons */
   .btn-primary {
-    @apply bg-primary text-white px-6 py-3 rounded-2xl font-semibold 
-           transition-all duration-300 hover:shadow-lg 
-           hover:-translate-y-1 active:scale-95 cursor-pointer;
+    @apply bg-primary text-white px-6 py-3 rounded-2xl font-semibold transition-all duration-300 hover:shadow-lg hover:-translate-y-1 active:scale-95 cursor-pointer;
   }
 
   .btn-secondary {
-    @apply bg-secondary text-white px-6 py-3 rounded-2xl font-semibold 
-           transition-all duration-300 hover:shadow-lg 
-           hover:-translate-y-1 active:scale-95 cursor-pointer;
+    @apply bg-secondary text-white px-6 py-3 rounded-2xl font-semibold transition-all duration-300 hover:shadow-lg hover:-translate-y-1 active:scale-95 cursor-pointer;
+  }
+}
+
+@layer utilities {
+  .masked-img {
+    mask-image: radial-gradient(circle, black 40%, transparent 40%);
+    -webkit-mask-image: radial-gradient(circle, black 40%, transparent 40%);
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-size: contain;
+    -webkit-mask-size: contain;
+  }
+
+  .abs-center {
+    @apply absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2;
+  }
+
+  .video-carousel_container {
+    @apply relative sm:w-[70vw] w-[88vw] md:h-[70vh] sm:h-[50vh] h-[35vh];
+  }
+
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+
+  .control-btn {
+    @apply ml-4 p-4 rounded-full bg-gray-300 backdrop-blur flex items-center justify-center;
+  }
+
+  .section-heading {
+    @apply text-4xl md:text-6xl font-black tracking-tighter;
+  }
+
+  .link {
+    @apply text-xl font-bold text-primary cursor-pointer hover:underline flex items-center gap-2;
   }
 }
