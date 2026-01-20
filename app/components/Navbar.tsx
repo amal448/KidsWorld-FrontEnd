@@ -1,13 +1,14 @@
 'use client'
 import Link from 'next/link'
 import React, { useState, useEffect } from 'react'
-
+import { useAuth } from '@/context/AuthContext'
 import { useShop } from '../context/ShopContext'
 
 const Navbar = () => {
-    const { cartCount, wishlistItems } = useShop()
+    const { cartCount } = useShop()
     const [scrolled, setScrolled] = useState(false)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const { user, logout, loading } = useAuth()
 
     useEffect(() => {
         const handleScroll = () => {
@@ -20,6 +21,8 @@ const Navbar = () => {
         window.addEventListener('scroll', handleScroll)
         return () => window.removeEventListener('scroll', handleScroll)
     }, [])
+    // Hide the login/logout buttons until we know the auth status
+    if (loading) return <div className="w-20 h-8 bg-slate-100 animate-pulse rounded-xl" />;
 
     return (
         <header
@@ -58,9 +61,7 @@ const Navbar = () => {
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
                         </svg>
-                        {wishlistItems.length > 0 && (
-                            <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">{wishlistItems.length}</span>
-                        )}
+
                     </Link>
 
                     {/* Cart Icon */}
@@ -74,9 +75,25 @@ const Navbar = () => {
                     </Link>
 
                     {/* Login Button */}
-                    <Link href="/login" className="btn-primary py-2 px-5 rounded-xl text-sm">
-                        Login
-                    </Link>
+                    {/* {
+                        user ?
+                            <button onClick={logout} className="btn-primary py-2 px-5 rounded-xl text-sm">
+                                LOGOUT
+                            </button> :
+                            <Link href="/login" className="btn-primary py-2 px-5 rounded-xl text-sm">
+                                LOGIN
+                            </Link>
+
+
+                    } */}
+                    {user ? (
+                        <div className="flex items-center gap-4">
+                            <span className="text-sm font-bold">Hi, {user.name}</span>
+                            <button onClick={logout} className="btn-primary">LOGOUT</button>
+                        </div>
+                    ) : (
+                        <Link href="/login" className="btn-primary">LOGIN</Link>
+                    )}
                 </div>
 
                 {/* Mobile Menu Button */}

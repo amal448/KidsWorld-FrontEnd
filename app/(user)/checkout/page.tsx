@@ -1,25 +1,70 @@
 'use client';
 import React, { useState } from 'react';
 import { useShop } from '../../context/ShopContext';
+import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import Image from 'next/image';
+import { paymentService } from '@/services/paymentService';
 
 import { useRouter } from 'next/navigation';
 
 const Checkout = () => {
     const { cartItems, cartTotal, clearCart } = useShop();
-    const router = useRouter(); // Use App Router
+    const router = useRouter();
+    const [paymentMethod, setPaymentMethod] = useState<'COD' | 'Card'>('COD');
+    const [loading, setLoading] = useState(false);
+    const { loading: authLoading } = useAuth();
 
-    const handlePlaceOrder = (e: React.FormEvent) => {
+    const handlePlaceOrder = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        // Simulate API call
-        setTimeout(() => {
-            clearCart();
-            router.push('/success');
-        }, 1500);
+
+        if (authLoading) {
+            alert("Please wait, verifying session...");
+            return;
+        }
+
+        setLoading(true);
+
+        const formData = new FormData(e.currentTarget);
+        const address = {
+            firstName: formData.get('firstName'),
+            lastName: formData.get('lastName'),
+            email: formData.get('email'),
+            street: formData.get('street'),
+            city: formData.get('city'),
+            state: formData.get('state'),
+            zipCode: formData.get('zipCode'),
+        };
+
+        const items = cartItems.map(item => ({
+            productId: item.id,
+            quantity: item.quantity
+        }));
+
+        try {
+            const result = await paymentService.initiatePayment({
+                items,
+                paymentMethod,
+                address,
+                shippingFee: 0 // Free shipping
+            });
+
+            if (paymentMethod === 'COD') {
+                clearCart();
+                router.push(`/success?orderId=${result.order._id}`);
+            } else {
+                // Stripe or other online payment
+                if (result.url) {
+                    window.location.href = result.url;
+                }
+            }
+        } catch (error: any) {
+            console.error("Payment Error:", error);
+            alert(error.message || "Something went wrong. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
-
-
 
     if (cartItems.length === 0) {
         return (
@@ -31,7 +76,7 @@ const Checkout = () => {
     }
 
     return (
-        <main className="min-h-screen bg-slate-50 py-24 md:py-32">
+        <main className="min-h-screen bg-slate-50 py-12 md:py-16">
             <div className="container mx-auto px-4 md:px-8">
                 <h1 className="text-4xl font-black text-slate-900 font-display mb-8">Checkout</h1>
 
@@ -43,43 +88,63 @@ const Checkout = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">First Name</label>
-                                    <input required type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
+                                    <input required name="firstName" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">Last Name</label>
-                                    <input required type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
+                                    <input required name="lastName" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Email Address</label>
-                                <input required type="email" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
+                                <input required name="email" type="email" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Street Address</label>
-                                <input required type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="123 Happy St" />
+                                <input required name="street" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="123 Happy St" />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">City</label>
-                                    <input required type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
+                                    <input required name="city" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">State</label>
-                                    <input required type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
+                                    <input required name="state" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">Zip Code</label>
-                                    <input required type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
+                                    <input required name="zipCode" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
                                 </div>
                             </div>
 
-                            <h2 className="text-2xl font-bold text-slate-900 mt-10 mb-6">Payment</h2>
-                            <div className="p-4 border border-slate-200 rounded-xl bg-slate-50 text-slate-500 text-sm">
-                                🔒 This is a demo. No payment is actually processed.
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">Card Number (Demo)</label>
-                                <input type="text" placeholder="0000 0000 0000 0000" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
+                            <h2 className="text-2xl font-bold text-slate-900 mt-10 mb-6">Payment Method</h2>
+                            <div className="space-y-4">
+                                <label className={`flex items-center p-4 border rounded-2xl cursor-pointer transition-all ${paymentMethod === 'COD' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-slate-200 hover:border-primary/50'}`}>
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="COD"
+                                        checked={paymentMethod === 'COD'}
+                                        onChange={() => setPaymentMethod('COD')}
+                                        className="w-5 h-5 text-primary focus:ring-primary border-gray-300"
+                                    />
+                                    <span className="ml-3 font-bold text-slate-900">Cash on Delivery</span>
+                                    <span className="ml-auto text-sm text-slate-500">Pay when you receive</span>
+                                </label>
+
+                                <label className={`flex items-center p-4 border rounded-2xl cursor-pointer transition-all ${paymentMethod === 'Card' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-slate-200 hover:border-primary/50'}`}>
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="Card"
+                                        checked={paymentMethod === 'Card'}
+                                        onChange={() => setPaymentMethod('Card')}
+                                        className="w-5 h-5 text-primary focus:ring-primary border-gray-300"
+                                    />
+                                    <span className="ml-3 font-bold text-slate-900">Online Payment (Card)</span>
+                                    <span className="ml-auto text-sm text-slate-500">Secured by Stripe</span>
+                                </label>
                             </div>
                         </form>
                     </div>
@@ -98,7 +163,7 @@ const Checkout = () => {
                                             <p className="font-bold text-slate-900 line-clamp-1">{item.name}</p>
                                             <p className="text-slate-500">Qty: {item.quantity}</p>
                                         </div>
-                                        <p className="font-bold text-slate-900">${(item.price * item.quantity).toFixed(2)}</p>
+                                        <p className="font-bold text-slate-900">₹{(item.price * item.quantity).toFixed(2)}</p>
                                     </div>
                                 ))}
                             </div>
@@ -106,7 +171,7 @@ const Checkout = () => {
                             <div className="border-t border-slate-100 pt-4 space-y-2 mb-6 text-sm text-slate-600">
                                 <div className="flex justify-between">
                                     <span>Subtotal</span>
-                                    <span>${cartTotal.toFixed(2)}</span>
+                                    <span>₹{cartTotal.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span>Shipping</span>
@@ -114,20 +179,21 @@ const Checkout = () => {
                                 </div>
                                 <div className="flex justify-between">
                                     <span>Tax</span>
-                                    <span>${(cartTotal * 0.08).toFixed(2)}</span>
+                                    <span>₹{(cartTotal * 0.08).toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between text-lg font-black text-slate-900 pt-2 border-t border-slate-100 mt-2">
                                     <span>Total</span>
-                                    <span className="text-primary">${(cartTotal * 1.08).toFixed(2)}</span>
+                                    <span className="text-primary">₹{(cartTotal * 1.08).toFixed(2)}</span>
                                 </div>
                             </div>
 
                             <button
                                 type="submit"
                                 form="checkout-form"
-                                className="width-full btn-primary w-full py-4 text-center justify-center shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1"
+                                disabled={loading}
+                                className="width-full btn-primary w-full py-4 text-center justify-center shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed"
                             >
-                                Place Order
+                                {loading ? 'Processing...' : 'Place Order'}
                             </button>
                         </div>
                     </div>

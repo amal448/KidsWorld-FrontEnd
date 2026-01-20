@@ -13,11 +13,11 @@ export default function Home() {
                 <div className="container mx-auto px-5 md:px-10">
                     <div className="mb-12 w-full md:flex items-end justify-between">
                         <h1 id="title" className="section-heading text-white">Get the Highlights.</h1>
-                        <div className="flex flex-wrap items-end gap-5">
+                        {/* <div className="flex flex-wrap items-end gap-5">
                             <p className="link">Watch the film
                                 <img src="/images/watch.svg" alt="watch" className="ml-2" />
                             </p>
-                        </div>
+                        </div> */}
                     </div>
                     <VideoCarousel />
                 </div>

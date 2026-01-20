@@ -1,20 +1,53 @@
 'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/services/api';
+import { useRouter } from 'next/navigation';
 
 const Signup = () => {
-    const [isLoading, setIsLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const { setUser } = useAuth();
+    const router = useRouter();
+    const [error, setError] = useState("")
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-        // Simulate signup delay
-        setTimeout(() => {
-            setIsLoading(false);
-            alert("Account Created Successfully!");
-        }, 1500);
+    // const handleSubmit = (e: React.FormEvent) => {
+    //     e.preventDefault();
+    //     setIsLoading(true);
+    //     // Simulate signup delay
+    //     setTimeout(() => {
+    //         setIsLoading(false);
+    //         alert("Account Created Successfully!");
+    //     }, 1500);
+    // };
+
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault(); // Prevents native HTML refresh
+        setLoading(true);
+        setError("");
+
+        const formData = new FormData(e.currentTarget);
+
+        try {
+            const res = await apiFetch("/auth/register", {
+                method: "POST",
+                body: JSON.stringify(Object.fromEntries(formData)),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                router.refresh();
+                setUser(data.user); // Update global state
+                router.push("/login");
+            } else {
+                alert("Login Failed");
+            }
+        } catch (err) {
+            setError("Something went wrong. Please try again.");
+            setLoading(false);
+        }
     };
-
     return (
         <main className="min-h-screen bg-slate-50 flex items-center justify-center py-20 px-4">
             <div className="w-full max-w-md bg-white rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden relative">
@@ -36,6 +69,7 @@ const Signup = () => {
                             <label className="block text-sm font-bold text-slate-700 mb-2" htmlFor="name">Full Name</label>
                             <input
                                 id="name"
+                                name="name"
                                 type="text"
                                 required
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-4 focus:ring-secondary/10 outline-none transition-all bg-slate-50 focus:bg-white"
@@ -46,6 +80,7 @@ const Signup = () => {
                             <label className="block text-sm font-bold text-slate-700 mb-2" htmlFor="email">Email Address</label>
                             <input
                                 id="email"
+                                name="email"
                                 type="email"
                                 required
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-4 focus:ring-secondary/10 outline-none transition-all bg-slate-50 focus:bg-white"
@@ -56,6 +91,7 @@ const Signup = () => {
                             <label className="block text-sm font-bold text-slate-700 mb-2" htmlFor="password">Password</label>
                             <input
                                 id="password"
+                                name="password"
                                 type="password"
                                 required
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-4 focus:ring-secondary/10 outline-none transition-all bg-slate-50 focus:bg-white"
@@ -66,6 +102,7 @@ const Signup = () => {
                             <label className="block text-sm font-bold text-slate-700 mb-2" htmlFor="confirm-password">Confirm Password</label>
                             <input
                                 id="confirm-password"
+                                name="confirm-password"
                                 type="password"
                                 required
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-4 focus:ring-secondary/10 outline-none transition-all bg-slate-50 focus:bg-white"
@@ -75,10 +112,10 @@ const Signup = () => {
 
                         <button
                             type="submit"
-                            disabled={isLoading}
-                            className={`w-full py-4 rounded-xl font-bold text-white transition-all shadow-lg shadow-secondary/30 mt-2 ${isLoading ? 'bg-slate-300 cursor-not-allowed' : 'bg-secondary hover:bg-primary hover:shadow-xl hover:-translate-y-1'}`}
+                            disabled={loading}
+                            className={`w-full py-4 rounded-xl font-bold text-white transition-all shadow-lg shadow-secondary/30 mt-2 ${loading ? 'bg-slate-300 cursor-not-allowed' : 'bg-secondary hover:bg-primary hover:shadow-xl hover:-translate-y-1'}`}
                         >
-                            {isLoading ? 'Creating Account...' : 'Sign Up'}
+                            {loading ? 'Creating Account...' : 'Sign Up'}
                         </button>
 
                         <div className="relative my-6">

@@ -21,7 +21,7 @@ const Cart = () => {
     }
 
     return (
-        <main className="min-h-screen bg-slate-50 py-24 md:py-32">
+        <main className="min-h-screen bg-slate-50 py-12 md:py-16">
             <div className="container mx-auto px-4 md:px-8">
                 <h1 className="text-4xl font-black text-slate-900 font-display mb-8">Your Cart ({cartItems.length})</h1>
 

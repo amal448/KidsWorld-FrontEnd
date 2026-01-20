@@ -24,7 +24,7 @@ const MediaCarousel = ({ items }: { items: MediaItem[] }) => {
     return (
         <div className="flex flex-col gap-4">
             {/* Main Display */}
-            <div className="relative aspect-square w-full rounded-3xl overflow-hidden bg-slate-100 border border-slate-200 group">
+            <div className="relative aspect-[4/3] w-full max-h-[500px] rounded-3xl overflow-hidden bg-slate-100 border border-slate-200 group mx-auto">
                 {currentItem.type === 'video' ? (
                     <video
                         src={currentItem.src}

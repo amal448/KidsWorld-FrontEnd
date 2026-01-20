@@ -1,9 +1,8 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { collectionProducts } from '../constants'; // Using mock data to hydrate/reference
 
 export type CartItem = {
-    id: number;
+    id: string; // Unified to string for MongoDB
     name: string;
     price: number;
     image: string;
@@ -13,40 +12,36 @@ export type CartItem = {
 
 type ShopContextType = {
     cartItems: CartItem[];
-    wishlistItems: number[]; // Store Product IDs
     addToCart: (item: CartItem) => void;
-    removeFromCart: (id: number) => void;
-    updateQuantity: (id: number, quantity: number) => void;
-    toggleWishlist: (id: number) => void;
+    removeFromCart: (id: string) => void; // Changed to string
+    updateQuantity: (id: string, quantity: number) => void; // Changed to string
     clearCart: () => void;
-    isInWishlist: (id: number) => boolean;
-    getItemQuantity: (id: number) => number;
+    getItemQuantity: (id: string) => number; // Changed to string
     cartTotal: number;
     cartCount: number;
+    isHydrated: boolean; // Standard for Next.js localStorage
 };
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
 
 export const ShopProvider = ({ children }: { children: ReactNode }) => {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
-    const [wishlistItems, setWishlistItems] = useState<number[]>([]);
+    const [isHydrated, setIsHydrated] = useState(false);
 
-    // Load from local storage on mount (client-side only)
+    // 1. Load from local storage (Hydration)
     useEffect(() => {
         const storedCart = localStorage.getItem('cartItems');
-        const storedWishlist = localStorage.getItem('wishlistItems');
         if (storedCart) setCartItems(JSON.parse(storedCart));
-        if (storedWishlist) setWishlistItems(JSON.parse(storedWishlist));
+        setIsHydrated(true); // Signal that client state is ready
     }, []);
 
-    // Save to local storage whenever state changes
+    // 2. Save to local storage (Only after hydration to prevent overwriting with empty arrays)
     useEffect(() => {
-        localStorage.setItem('cartItems', JSON.stringify(cartItems));
-    }, [cartItems]);
+        if (isHydrated) {
+            localStorage.setItem('cartItems', JSON.stringify(cartItems));
+        }
+    }, [cartItems, isHydrated]);
 
-    useEffect(() => {
-        localStorage.setItem('wishlistItems', JSON.stringify(wishlistItems));
-    }, [wishlistItems]);
 
     const addToCart = (item: CartItem) => {
         setCartItems((prev) => {
@@ -60,11 +55,11 @@ export const ShopProvider = ({ children }: { children: ReactNode }) => {
         });
     };
 
-    const removeFromCart = (id: number) => {
+    const removeFromCart = (id: string) => {
         setCartItems((prev) => prev.filter((item) => item.id !== id));
     };
 
-    const updateQuantity = (id: number, quantity: number) => {
+    const updateQuantity = (id: string, quantity: number) => {
         setCartItems((prev) =>
             prev.map((item) =>
                 item.id === id ? { ...item, quantity: Math.max(1, quantity) } : item
@@ -72,22 +67,10 @@ export const ShopProvider = ({ children }: { children: ReactNode }) => {
         );
     };
 
-    const clearCart = () => {
-        setCartItems([]);
-    };
+    const clearCart = () => setCartItems([]);
 
-    const toggleWishlist = (id: number) => {
-        setWishlistItems((prev) => {
-            if (prev.includes(id)) {
-                return prev.filter((itemId) => itemId !== id);
-            }
-            return [...prev, id];
-        });
-    };
 
-    const isInWishlist = (id: number) => wishlistItems.includes(id);
-
-    const getItemQuantity = (id: number) => {
+    const getItemQuantity = (id: string) => {
         return cartItems.find((item) => item.id === id)?.quantity || 0;
     };
 
@@ -102,16 +85,14 @@ export const ShopProvider = ({ children }: { children: ReactNode }) => {
         <ShopContext.Provider
             value={{
                 cartItems,
-                wishlistItems,
                 addToCart,
                 removeFromCart,
                 updateQuantity,
-                toggleWishlist,
                 clearCart,
-                isInWishlist,
                 getItemQuantity,
                 cartTotal,
                 cartCount,
+                isHydrated
             }}
         >
             {children}
@@ -121,8 +102,6 @@ export const ShopProvider = ({ children }: { children: ReactNode }) => {
 
 export const useShop = () => {
     const context = useContext(ShopContext);
-    if (!context) {
-        throw new Error('useShop must be used within a ShopProvider');
-    }
+    if (!context) throw new Error('useShop must be used within a ShopProvider');
     return context;
 };
