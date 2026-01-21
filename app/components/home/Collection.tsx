@@ -4,7 +4,15 @@ import Image from 'next/image';
 
 const Collection = async () => {
     // 1. Fetch data directly on the server
-    const products = await categoryService.getCategories();
+    let products = [];
+    try {
+        products = await categoryService.getCategories();
+    } catch (error) {
+        console.warn("Failed to fetch categories during build/render:", error);
+        products = [];
+    }
+
+    if (!Array.isArray(products)) products = [];
 
     return (
         <section className="py-24 bg-slate-50 text-slate-900">
