@@ -34,11 +34,14 @@ export const orderService = {
     },
 
     updateOrderStatus: async (id: string, status: string) => {
-        const res = await apiFetch(`/order/${id}/status`, {
-            method: 'PUT',
+        const res = await apiFetch(`/order/status/${id}`, {
+            method: 'PATCH',
             body: JSON.stringify({ orderStatus: status }),
         });
-        if (!res.ok) throw new Error('Failed to update order status');
+        if (!res.ok) {
+            const error = await res.json().catch(() => ({}));
+            throw new Error(error.message || 'Failed to update order status');
+        }
         return res.json();
     }
 };

@@ -40,7 +40,7 @@ export const productService = {
     createProduct: async (data: any) => {
         const res = await apiFetch('/product/new', {
             method: 'POST',
-            body: JSON.stringify(data),
+            body: data instanceof FormData ? data : JSON.stringify(data),
         });
         if (!res.ok) throw new Error('Failed to create product');
         return res.json();
@@ -48,8 +48,8 @@ export const productService = {
 
     updateProduct: async (id: string, data: any) => {
         const res = await apiFetch(`/product/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(data),
+            method: 'PATCH',
+            body: data instanceof FormData ? data : JSON.stringify(data),
         });
         if (!res.ok) throw new Error('Failed to update product');
         return res.json();

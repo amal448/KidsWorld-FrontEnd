@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/services/api';
+import { tokenStore } from '@/services/tokenStore';
 import { toast } from "sonner";
 import { loginSchema, validateForm } from '@/lib/validators';
 
@@ -44,6 +45,7 @@ const Login = () => {
 
             if (res.ok) {
                 const data = await res.json();
+                tokenStore.setToken(data.accessToken); // Store the token!
                 router.refresh();
                 setUser(data.user); // Update global state
                 toast.success("Welcome back!");

@@ -60,6 +60,8 @@ export default function OrdersPage() {
                 setSelectedOrder((prev: any) => ({ ...prev, orderStatus: newStatus }));
             }
         } catch (error) {
+            console.log(error);
+
             toast.error("Failed to update status");
         }
     };
@@ -90,8 +92,8 @@ export default function OrdersPage() {
                 <button
                     onClick={() => setActiveTab('active')}
                     className={`pb-3 text-sm font-bold transition-all border-b-2 ${activeTab === 'active'
-                            ? 'border-primary text-primary'
-                            : 'border-transparent text-slate-500 hover:text-slate-700'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-slate-500 hover:text-slate-700'
                         }`}
                 >
                     Active Orders ({activeOrders.length})
@@ -99,8 +101,8 @@ export default function OrdersPage() {
                 <button
                     onClick={() => setActiveTab('history')}
                     className={`pb-3 text-sm font-bold transition-all border-b-2 ${activeTab === 'history'
-                            ? 'border-primary text-primary'
-                            : 'border-transparent text-slate-500 hover:text-slate-700'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-slate-500 hover:text-slate-700'
                         }`}
                 >
                     Order History ({historyOrders.length})

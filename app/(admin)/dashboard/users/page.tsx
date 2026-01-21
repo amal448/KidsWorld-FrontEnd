@@ -28,6 +28,17 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { toast } from 'sonner';
 import { Edit, Trash2 } from 'lucide-react';
 
@@ -142,29 +153,85 @@ export default function UsersPage() {
 
             {/* Edit User Sheet */}
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                <SheetContent>
-                    <SheetHeader>
-                        <SheetTitle>Edit User</SheetTitle>
-                    </SheetHeader>
+                <SheetContent className="w-full sm:max-w-md p-0">
                     {editingUser && (
-                        <form onSubmit={handleUpdate} className="grid gap-4 py-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Name</label>
-                                <input name="name" defaultValue={editingUser.name} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background" />
+                        <div className="h-full flex flex-col">
+                            {/* Profile Header */}
+                            <div className="bg-slate-50 border-b border-slate-100 p-6 flex flex-col items-center text-center">
+                                <Avatar className="h-24 w-24 mb-4 ring-4 ring-white shadow-sm">
+                                    <AvatarImage src={editingUser.avatar} />
+                                    <AvatarFallback className="text-2xl bg-slate-200 text-slate-500 font-bold">
+                                        {editingUser.name?.charAt(0).toUpperCase()}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <h2 className="text-xl font-bold text-slate-900">{editingUser.name}</h2>
+                                <p className="text-slate-500 text-sm mb-3">{editingUser.email}</p>
+                                <div className="flex gap-2 justify-center">
+                                    <Badge variant="outline" className="bg-white text-slate-600 border-slate-200 px-3 capitalize">
+                                        {editingUser.provider || 'email'}
+                                    </Badge>
+                                    {editingUser.isVerified && (
+                                        <Badge variant="default" className="bg-blue-600 hover:bg-blue-700 px-3">
+                                            Verified
+                                        </Badge>
+                                    )}
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Email</label>
-                                <input name="email" defaultValue={editingUser.email} disabled className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background opacity-50 cursor-not-allowed" />
+
+                            {/* Form Content */}
+                            <div className="flex-1 overflow-y-auto p-6">
+                                <form onSubmit={handleUpdate} className="grid gap-6">
+                                    <div className="space-y-3">
+                                        <Label htmlFor="name">Full Name</Label>
+                                        <Input id="name" name="name" defaultValue={editingUser.name} />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-3">
+                                            <Label htmlFor="role">Role</Label>
+                                            <Select name="role" defaultValue={editingUser.role}>
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="user">User</SelectItem>
+                                                    <SelectItem value="admin">Admin</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <Label>Wallet</Label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">₹</span>
+                                                <Input
+                                                    value={editingUser.walletBalance || 0}
+                                                    disabled
+                                                    className="pl-7 bg-slate-50 opacity-100 text-slate-600"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <Label>User ID</Label>
+                                        <div className="relative">
+                                            <Input value={editingUser._id} disabled className="font-mono text-xs bg-slate-50 text-slate-500" />
+                                        </div>
+                                    </div>
+
+                                    {editingUser.googleId && (
+                                        <div className="space-y-3">
+                                            <Label>Google ID</Label>
+                                            <Input value={editingUser.googleId} disabled className="font-mono text-xs bg-slate-50 text-slate-500" />
+                                        </div>
+                                    )}
+
+                                    <div className="pt-4">
+                                        <Button type="submit" className="w-full h-11 text-base font-semibold">Save Changes</Button>
+                                    </div>
+                                </form>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Role</label>
-                                <select name="role" defaultValue={editingUser.role} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background">
-                                    <option value="user">User</option>
-                                    <option value="admin">Admin</option>
-                                </select>
-                            </div>
-                            <Button type="submit" className="mt-4">Save Changes</Button>
-                        </form>
+                        </div>
                     )}
                 </SheetContent>
             </Sheet>

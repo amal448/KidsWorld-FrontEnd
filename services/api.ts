@@ -6,9 +6,13 @@ export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
   const token = tokenStore.getToken();
 
   const headers: any = {
-    "Content-Type": "application/json",
     ...options.headers,
   };
+
+  // Only add Content-Type: application/json if not passing FormData
+  if (!headers["Content-Type"] && !(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`; // Attach token

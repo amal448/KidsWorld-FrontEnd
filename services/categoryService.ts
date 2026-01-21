@@ -10,7 +10,7 @@ export const categoryService = {
     createCategory: async (data: any) => {
         const res = await apiFetch('/category', {
             method: 'POST',
-            body: JSON.stringify(data),
+            body: data instanceof FormData ? data : JSON.stringify(data),
         });
         if (!res.ok) throw new Error('Failed to create category');
         return res.json();
@@ -18,8 +18,8 @@ export const categoryService = {
 
     updateCategory: async (id: string, data: any) => {
         const res = await apiFetch(`/category/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(data),
+            method: 'PATCH',
+            body: data instanceof FormData ? data : JSON.stringify(data),
         });
         if (!res.ok) throw new Error('Failed to update category');
         return res.json();

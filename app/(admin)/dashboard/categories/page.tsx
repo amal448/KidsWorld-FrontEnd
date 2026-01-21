@@ -16,6 +16,7 @@ import {
     SheetContent,
     SheetHeader,
     SheetTitle,
+    SheetDescription,
     SheetTrigger,
 } from "@/components/ui/sheet";
 import {
@@ -28,6 +29,9 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from 'sonner';
 import { Edit, Trash2, Plus } from 'lucide-react';
 
@@ -70,21 +74,31 @@ export default function CategoriesPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const formData = new FormData(e.target as HTMLFormElement);
-        const data = Object.fromEntries(formData);
+        const form = e.target as HTMLFormElement;
+        const formData = new FormData(form);
+        const submissionData = new FormData();
+
+        submissionData.append('name', formData.get('name') as string);
+        submissionData.append('description', formData.get('description') as string);
+
+        const imageInput = form.querySelector('#image') as HTMLInputElement;
+        if (imageInput?.files?.length) {
+            submissionData.append('image', imageInput.files[0]);
+        }
 
         try {
             if (editingCategory) {
-                await categoryService.updateCategory(editingCategory._id, data);
+                await categoryService.updateCategory(editingCategory._id, submissionData);
                 toast.success("Category updated successfully");
             } else {
-                await categoryService.createCategory(data);
+                await categoryService.createCategory(submissionData);
                 toast.success("Category created successfully");
             }
             setIsSheetOpen(false);
             loadCategories();
         } catch (error) {
             toast.error("Failed to save category");
+            console.error(error);
         }
     };
 
@@ -154,30 +168,44 @@ export default function CategoriesPage() {
             {/* Create/Edit Sheet */}
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetContent>
-                    <SheetHeader>
+                    <SheetHeader className="px-6 pt-6 pb-2">
                         <SheetTitle>{editingCategory ? 'Edit Category' : 'New Category'}</SheetTitle>
+                        <SheetDescription>
+                            {editingCategory ? 'Update category details and image.' : 'Create a new category for your products.'}
+                        </SheetDescription>
                     </SheetHeader>
-                    <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Name</label>
-                            <input
+                    <form onSubmit={handleSubmit} className="grid gap-6 px-6 pb-6 pt-4">
+                        <div className="space-y-3">
+                            <Label htmlFor="name">Name</Label>
+                            <Input
+                                id="name"
                                 name="name"
                                 defaultValue={editingCategory?.name || ''}
                                 required
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                                 placeholder="e.g. Toys"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Description</label>
-                            <textarea
+                        <div className="space-y-3">
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                                id="description"
                                 name="description"
                                 defaultValue={editingCategory?.description || ''}
-                                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background min-h-[80px]"
+                                className="min-h-[100px]"
                                 placeholder="Optional description..."
                             />
                         </div>
-                        <Button type="submit" className="mt-4">{editingCategory ? 'Update' : 'Create'}</Button>
+                        <div className="space-y-3">
+                            <Label htmlFor="image">Category Image</Label>
+                            <Input
+                                id="image"
+                                name="image"
+                                type="file"
+                                accept="image/*"
+                                className="cursor-pointer"
+                            />
+                        </div>
+                        <Button type="submit" className="mt-4 w-full h-11 text-base">{editingCategory ? 'Update Category' : 'Create Category'}</Button>
                     </form>
                 </SheetContent>
             </Sheet>

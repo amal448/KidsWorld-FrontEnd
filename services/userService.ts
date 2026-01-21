@@ -8,8 +8,8 @@ export const userService = {
     },
 
     updateUser: async (id: string, data: any) => {
-        const res = await apiFetch(`/users/${id}`, {
-            method: 'PUT',
+        const res = await apiFetch(`/user/${id}`, {
+            method: 'PATCH',
             body: JSON.stringify(data),
         });
         if (!res.ok) throw new Error('Failed to update user');
@@ -17,7 +17,7 @@ export const userService = {
     },
 
     deleteUser: async (id: string) => {
-        const res = await apiFetch(`/users/${id}`, {
+        const res = await apiFetch(`/user/${id}`, {
             method: 'DELETE',
         });
         if (!res.ok) throw new Error('Failed to delete user');

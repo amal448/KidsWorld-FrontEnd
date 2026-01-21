@@ -21,7 +21,8 @@
   --header-height: 80px;
 
   /* Font overrides */
-  --font-display: "Arial", "Helvetica", sans-serif;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
