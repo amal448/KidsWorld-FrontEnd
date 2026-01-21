@@ -5,6 +5,8 @@ import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import Image from 'next/image';
 import { paymentService } from '@/services/paymentService';
+import { checkoutSchema, validateForm } from '@/lib/validators';
+import { toast } from 'sonner';
 
 import { useRouter } from 'next/navigation';
 
@@ -12,32 +14,46 @@ const Checkout = () => {
     const { cartItems, cartTotal, clearCart } = useShop();
     const router = useRouter();
     const [paymentMethod, setPaymentMethod] = useState<'COD' | 'Card'>('COD');
+    const [useWallet, setUseWallet] = useState(false);
     const [loading, setLoading] = useState(false);
-    const { loading: authLoading } = useAuth();
+    const { loading: authLoading, user, checkUser } = useAuth();
 
     const handlePlaceOrder = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        if (authLoading) {
-            alert("Please wait, verifying session...");
-            return;
-        }
+        // if (authLoading) {
+        //     alert("Please wait, verifying session...");
+        //     return;
+        // }
 
         setLoading(true);
 
         const formData = new FormData(e.currentTarget);
+        const rawData = {
+            ...Object.fromEntries(formData),
+            paymentMethod
+        };
+
+        // Zod Validation
+        const validation = validateForm(checkoutSchema, rawData);
+        if (!validation.success) {
+            toast.error(validation.error);
+            setLoading(false);
+            return;
+        }
+
         const address = {
-            firstName: formData.get('firstName'),
-            lastName: formData.get('lastName'),
-            email: formData.get('email'),
-            street: formData.get('street'),
-            city: formData.get('city'),
-            state: formData.get('state'),
-            zipCode: formData.get('zipCode'),
+            firstName: validation.data.firstName,
+            lastName: validation.data.lastName,
+            email: validation.data.email,
+            street: validation.data.street,
+            city: validation.data.city,
+            state: validation.data.state,
+            zipCode: validation.data.zipCode,
         };
 
         const items = cartItems.map(item => ({
-            productId: item.id,
+            product: item.id,
             quantity: item.quantity
         }));
 
@@ -46,10 +62,12 @@ const Checkout = () => {
                 items,
                 paymentMethod,
                 address,
-                shippingFee: 0 // Free shipping
+                shippingFee: 0, // Free shipping
+                useWallet
             });
 
             if (paymentMethod === 'COD') {
+                await checkUser(); // Refresh user data (wallet balance)
                 clearCart();
                 router.push(`/success?orderId=${result.order._id}`);
             } else {
@@ -60,7 +78,7 @@ const Checkout = () => {
             }
         } catch (error: any) {
             console.error("Payment Error:", error);
-            alert(error.message || "Something went wrong. Please try again.");
+            toast.error(error.message || "Something went wrong. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -75,6 +93,20 @@ const Checkout = () => {
         );
     }
 
+    // Price Calculations
+    const taxRate = 0.08;
+    // Calculate rounded tax as per previous requirement
+    const taxAmount = Math.round(cartTotal * taxRate);
+    const orderTotal = cartTotal + taxAmount;
+
+    // Wallet Calculations
+    const walletBalance = user?.walletBalance || 0;
+    console.log("user:", user);
+    console.log("Wallet Balance:", walletBalance);
+
+    const walletDeduction = useWallet ? Math.min(walletBalance, orderTotal) : 0;
+    const finalAmountToPay = orderTotal - walletDeduction;
+
     return (
         <main className="min-h-screen bg-slate-50 py-12 md:py-16">
             <div className="container mx-auto px-4 md:px-8">
@@ -88,33 +120,33 @@ const Checkout = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">First Name</label>
-                                    <input required name="firstName" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
+                                    <input name="firstName" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">Last Name</label>
-                                    <input required name="lastName" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
+                                    <input name="lastName" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Email Address</label>
-                                <input required name="email" type="email" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
+                                <input name="email" type="email" defaultValue={user?.email || ''} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Street Address</label>
-                                <input required name="street" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="123 Happy St" />
+                                <input name="street" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="123 Happy St" />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">City</label>
-                                    <input required name="city" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
+                                    <input name="city" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">State</label>
-                                    <input required name="state" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
+                                    <input name="state" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">Zip Code</label>
-                                    <input required name="zipCode" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
+                                    <input name="zipCode" type="text" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" />
                                 </div>
                             </div>
 
@@ -168,6 +200,28 @@ const Checkout = () => {
                                 ))}
                             </div>
 
+                            {/* Wallet Toggle */}
+                            <div className={`p-4 rounded-2xl border-2 transition-all mb-6 ${useWallet ? 'border-primary bg-primary/5' : 'border-slate-100 bg-slate-50'}`}>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-white rounded-lg shadow-sm text-lg">
+                                            💰
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-slate-900 text-sm">Use Wallet Balance</p>
+                                            <p className="text-xs text-slate-500">Available: ₹{walletBalance?.toFixed(2) || '0.00'}</p>
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        className="w-5 h-5 accent-primary cursor-pointer"
+                                        checked={useWallet}
+                                        onChange={(e) => setUseWallet(e.target.checked)}
+                                        disabled={!walletBalance || walletBalance <= 0}
+                                    />
+                                </div>
+                            </div>
+
                             <div className="border-t border-slate-100 pt-4 space-y-2 mb-6 text-sm text-slate-600">
                                 <div className="flex justify-between">
                                     <span>Subtotal</span>
@@ -178,12 +232,25 @@ const Checkout = () => {
                                     <span className="text-green-600 font-bold">Free</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span>Tax</span>
-                                    <span>₹{(cartTotal * 0.08).toFixed(2)}</span>
+                                    <span>Tax (Estimated)</span>
+                                    <span>₹{taxAmount.toFixed(2)}</span>
                                 </div>
-                                <div className="flex justify-between text-lg font-black text-slate-900 pt-2 border-t border-slate-100 mt-2">
-                                    <span>Total</span>
-                                    <span className="text-primary">₹{(cartTotal * 1.08).toFixed(2)}</span>
+
+                                <div className="flex justify-between pt-2 border-t border-slate-100 font-bold text-slate-800">
+                                    <span>Order Total</span>
+                                    <span>₹{orderTotal.toFixed(2)}</span>
+                                </div>
+
+                                {useWallet && walletDeduction > 0 && (
+                                    <div className="flex justify-between text-sm font-bold text-green-600">
+                                        <span>KidsWorld Wallet</span>
+                                        <span>- ₹{walletDeduction.toFixed(2)}</span>
+                                    </div>
+                                )}
+
+                                <div className="flex justify-between text-lg font-black text-slate-900 pt-3 border-t-2 border-dashed border-slate-100 mt-2">
+                                    <span>Final to Pay</span>
+                                    <span className="text-primary">₹{finalAmountToPay.toFixed(2)}</span>
                                 </div>
                             </div>
 
@@ -193,7 +260,7 @@ const Checkout = () => {
                                 disabled={loading}
                                 className="width-full btn-primary w-full py-4 text-center justify-center shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed"
                             >
-                                {loading ? 'Processing...' : 'Place Order'}
+                                {loading ? 'Processing...' : `Pay ₹${finalAmountToPay.toFixed(2)}`}
                             </button>
                         </div>
                     </div>

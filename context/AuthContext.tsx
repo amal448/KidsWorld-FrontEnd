@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { apiFetch } from '@/services/api';
 import { tokenStore } from '@/services/tokenStore';
 import { useRouter } from 'next/navigation';
@@ -12,29 +12,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
+    const checkUser = async () => {
+        try {
+            const res = await apiFetch("/auth/refresh-token");
+            if (res.ok) {
+                const data = await res.json();
+                console.log("[AuthContext] Refresh response:", data);
+                if (data.accessToken) {
+                    tokenStore.setToken(data.accessToken);
+                } else {
+                    console.error("[AuthContext] No accessToken in refresh response!");
+                }
+                setUser(data.user);
+                return true; // Login success
+            }
+            return false; // Login failed (e.g., 401)
+        } catch (err) {
+            setUser(null);
+            return false; // Login failed
+        } finally {
+            setLoading(false);
+        }
+    };
+    const isInitialized = useRef(false);
+
     // Check login status on page refresh
     useEffect(() => {
-        const checkUser = async () => {
-            try {
-                const res = await apiFetch("/auth/refresh-token");
-                if (res.ok) {
-                    const data = await res.json();
-                    console.log("[AuthContext] Refresh response:", data);
-                    if (data.accessToken) {
-                        tokenStore.setToken(data.accessToken);
-                    } else {
-                        console.error("[AuthContext] No accessToken in refresh response!");
-                    }
-                    setUser(data.user);
-                    // router.replace("/"); // ✅ redirect to home
-                }
-            } catch (err) {
-                setUser(null);
-            } finally {
-                setLoading(false);
-            }
+        const init = async () => {
+            // Prevent double-firing in Strict Mode
+            if (isInitialized.current) return;
+            isInitialized.current = true;
+
+            await checkUser().catch(() => { });
+            setLoading(false);
         };
-        checkUser();
+        init();
     }, []);
     const logout = async () => {
         try {
@@ -46,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
     return (
-        <AuthContext.Provider value={{ user, setUser, loading, logout }}>
+        <AuthContext.Provider value={{ user, setUser, loading, logout, checkUser }}>
             {children}
         </AuthContext.Provider>
     );

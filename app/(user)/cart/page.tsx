@@ -66,7 +66,7 @@ const Cart = () => {
                                                 +
                                             </button>
                                         </div>
-                                        <p className="text-xl font-black text-secondary">${(item.price * item.quantity).toFixed(2)}</p>
+                                        <p className="text-xl font-black text-secondary">₹{(item.price * item.quantity).toLocaleString('en-IN')}</p>
                                     </div>
                                 </div>
                             </div>
@@ -81,7 +81,7 @@ const Cart = () => {
                             <div className="space-y-4 mb-6 text-slate-600">
                                 <div className="flex justify-between">
                                     <span>Subtotal</span>
-                                    <span className="font-bold text-slate-900">${cartTotal.toFixed(2)}</span>
+                                    <span className="font-bold text-slate-900">₹{cartTotal.toLocaleString('en-IN')}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span>Shipping</span>
@@ -89,12 +89,12 @@ const Cart = () => {
                                 </div>
                                 <div className="flex justify-between">
                                     <span>Tax (Estimated)</span>
-                                    <span className="font-bold text-slate-900">${(cartTotal * 0.08).toFixed(2)}</span>
+                                    <span className="font-bold text-slate-900">₹{Math.round(cartTotal * 0.08).toLocaleString('en-IN')}</span>
                                 </div>
                             </div>
                             <div className="border-t border-slate-100 pt-4 mb-8 flex justify-between items-center">
                                 <span className="text-lg font-bold text-slate-900">Total</span>
-                                <span className="text-3xl font-black text-primary">${(cartTotal * 1.08).toFixed(2)}</span>
+                                <span className="text-3xl font-black text-primary">₹{(cartTotal + Math.round(cartTotal * 0.08)).toLocaleString('en-IN')}</span>
                             </div>
                             <Link href="/checkout" className="btn-primary w-full py-4 text-lg justify-center shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1 block text-center">
                                 Proceed to Checkout

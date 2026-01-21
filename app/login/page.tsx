@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/services/api';
+import { toast } from "sonner";
+import { loginSchema, validateForm } from '@/lib/validators';
 
 import Link from 'next/link';
 
@@ -12,6 +14,11 @@ const Login = () => {
     const router = useRouter();
     const [error, setError] = useState("");
 
+    const handleGoogleLogin = () => {
+        // We use window.location.href because we need to LEAVE the app 
+        window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`;
+    };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault(); // Prevents native HTML refresh
         setLoading(true);
@@ -19,22 +26,38 @@ const Login = () => {
 
         const formData = new FormData(e.currentTarget);
 
+        const data = Object.fromEntries(formData);
+
+        // Zod Validation
+        const validation = validateForm(loginSchema, data);
+        if (!validation.success) {
+            toast.error(validation.error);
+            setLoading(false);
+            return;
+        }
+
         try {
             const res = await apiFetch("/auth/login", {
                 method: "POST",
-                body: JSON.stringify(Object.fromEntries(formData)),
+                body: JSON.stringify(validation.data),
             });
 
             if (res.ok) {
                 const data = await res.json();
                 router.refresh();
                 setUser(data.user); // Update global state
-                router.push("/");
+                toast.success("Welcome back!");
+
+                if (data.user.role === 'admin') {
+                    router.push("/dashboard");
+                } else {
+                    router.push("/");
+                }
             } else {
-                alert("Login Failed");
+                toast.error("Login Failed. Please check your credentials.");
             }
         } catch (err) {
-            setError("Something went wrong. Please try again.");
+            toast.error("Something went wrong. Please try again.");
             setLoading(false);
         }
     };
@@ -66,7 +89,6 @@ const Login = () => {
                                 name="email" // Added name prop
                                 id="email"
                                 type="email"
-                                required
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all bg-slate-50 focus:bg-white"
                                 placeholder="mom@example.com"
                             />
@@ -74,12 +96,14 @@ const Login = () => {
                         <div>
                             <div className="flex justify-between items-center mb-2">
                                 <label className="block text-sm font-bold text-slate-700" htmlFor="password">Password</label>
+                                <Link href="/forgot-password" className="text-xs font-semibold text-primary hover:text-secondary transition-colors">
+                                    Forgot Password?
+                                </Link>
                             </div>
                             <input
                                 name="password" // Added name prop
                                 id="password"
                                 type="password"
-                                required
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all bg-slate-50 focus:bg-white"
                                 placeholder="••••••••"
                             />
@@ -96,7 +120,7 @@ const Login = () => {
                         {/* Google Button */}
                         <button
                             type="button"
-                            // onClick={() => signIn("google", { callbackUrl: "/checkout" })}
+                            onClick={handleGoogleLogin}
                             className="w-full py-4 rounded-xl font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-center gap-3"
                         >
                             <svg className="w-5 h-5" viewBox="0 0 24 24">...</svg>

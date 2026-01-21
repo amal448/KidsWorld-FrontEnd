@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/services/api';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { signupSchema, validateForm } from '@/lib/validators';
 
 const Signup = () => {
     const [loading, setLoading] = useState(false);
@@ -29,22 +31,34 @@ const Signup = () => {
 
         const formData = new FormData(e.currentTarget);
 
+        const data = Object.fromEntries(formData);
+
+        // Zod Validation
+        const validation = validateForm(signupSchema, data);
+        if (!validation.success) {
+            toast.error(validation.error);
+            setLoading(false);
+            return;
+        }
+
         try {
             const res = await apiFetch("/auth/register", {
                 method: "POST",
-                body: JSON.stringify(Object.fromEntries(formData)),
+                body: JSON.stringify(validation.data), // Send validated data
             });
 
             if (res.ok) {
                 const data = await res.json();
                 router.refresh();
-                setUser(data.user); // Update global state
-                router.push("/login");
+                // Redirect to verify page with email
+                const email = formData.get("email") as string;
+                toast.success("Account created! Please verify your email.");
+                router.push(`/verify?email=${encodeURIComponent(email)}`);
             } else {
-                alert("Login Failed");
+                toast.error("Signup Failed. Please try again.");
             }
         } catch (err) {
-            setError("Something went wrong. Please try again.");
+            toast.error("Something went wrong. Please try again.");
             setLoading(false);
         }
     };
@@ -71,7 +85,6 @@ const Signup = () => {
                                 id="name"
                                 name="name"
                                 type="text"
-                                required
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-4 focus:ring-secondary/10 outline-none transition-all bg-slate-50 focus:bg-white"
                                 placeholder="Super Mom"
                             />
@@ -82,7 +95,6 @@ const Signup = () => {
                                 id="email"
                                 name="email"
                                 type="email"
-                                required
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-4 focus:ring-secondary/10 outline-none transition-all bg-slate-50 focus:bg-white"
                                 placeholder="mom@example.com"
                             />
@@ -93,7 +105,6 @@ const Signup = () => {
                                 id="password"
                                 name="password"
                                 type="password"
-                                required
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-4 focus:ring-secondary/10 outline-none transition-all bg-slate-50 focus:bg-white"
                                 placeholder="••••••••"
                             />
@@ -102,9 +113,8 @@ const Signup = () => {
                             <label className="block text-sm font-bold text-slate-700 mb-2" htmlFor="confirm-password">Confirm Password</label>
                             <input
                                 id="confirm-password"
-                                name="confirm-password"
+                                name="confirmPassword"
                                 type="password"
-                                required
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-4 focus:ring-secondary/10 outline-none transition-all bg-slate-50 focus:bg-white"
                                 placeholder="••••••••"
                             />

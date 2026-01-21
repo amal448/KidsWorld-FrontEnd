@@ -3,6 +3,15 @@ import Link from 'next/link'
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useShop } from '../context/ShopContext'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const Navbar = () => {
     const { cartCount } = useShop()
@@ -48,22 +57,6 @@ const Navbar = () => {
 
                 {/* Right Side Actions */}
                 <div className="hidden md:flex items-center gap-6">
-                    {/* Search Icon */}
-                    <button className="text-slate-700 hover:text-primary transition-colors cursor-pointer">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                        </svg>
-                    </button>
-
-                    {/* Cart Icon */}
-                    {/* Wishlist Icon */}
-                    <Link href="/wishlist" className="relative text-slate-700 hover:text-primary transition-colors cursor-pointer">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                        </svg>
-
-                    </Link>
-
                     {/* Cart Icon */}
                     <Link href="/cart" className="relative text-slate-700 hover:text-primary transition-colors cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
@@ -74,23 +67,49 @@ const Navbar = () => {
                         )}
                     </Link>
 
-                    {/* Login Button */}
-                    {/* {
-                        user ?
-                            <button onClick={logout} className="btn-primary py-2 px-5 rounded-xl text-sm">
-                                LOGOUT
-                            </button> :
-                            <Link href="/login" className="btn-primary py-2 px-5 rounded-xl text-sm">
-                                LOGIN
-                            </Link>
-
-
-                    } */}
+                    {/* Login Button / User Dropdown */}
                     {user ? (
-                        <div className="flex items-center gap-4">
-                            <span className="text-sm font-bold">Hi, {user.name}</span>
-                            <button onClick={logout} className="btn-primary">LOGOUT</button>
-                        </div>
+                        <DropdownMenu modal={false}>
+                            <DropdownMenuTrigger className="outline-none">
+                                <Avatar className="h-9 w-9 border-2 border-slate-100 hover:border-primary transition-colors">
+                                    <AvatarImage src={`https://ui-avatars.com/api/?name=${user.name}&background=random`} alt={user.name} />
+                                    <AvatarFallback className="bg-primary text-white font-bold">{user.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 shadow-xl border-slate-100">
+                                <DropdownMenuLabel className="font-normal">
+                                    <div className="flex flex-col space-y-1">
+                                        <p className="text-sm font-bold leading-none text-slate-900">{user.name}</p>
+                                        <p className="text-xs leading-none text-slate-500">{user.email}</p>
+                                    </div>
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator className="bg-slate-100 my-2" />
+                                {user.role === 'admin' && (
+                                    <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-slate-50 focus:bg-slate-50 p-2.5">
+                                        <Link href="/dashboard" className="flex items-center gap-2 w-full font-medium text-slate-600 hover:text-primary">
+                                            <span>⚡</span> Dashboard
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-slate-50 focus:bg-slate-50 p-2.5">
+                                    <Link href="/profile" className="flex items-center gap-2 w-full font-medium text-slate-600 hover:text-primary">
+                                        <span>👤</span> Profile
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-slate-50 focus:bg-slate-50 p-2.5">
+                                    <Link href="/orders" className="flex items-center gap-2 w-full font-medium text-slate-600 hover:text-primary">
+                                        <span>📦</span> Orders
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator className="bg-slate-100 my-2" />
+                                <DropdownMenuItem
+                                    onClick={logout}
+                                    className="rounded-xl cursor-pointer hover:bg-red-50 focus:bg-red-50 text-red-500 hover:text-red-600 p-2.5 font-bold flex items-center gap-2"
+                                >
+                                    <span>🚪</span> Logout
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     ) : (
                         <Link href="/login" className="btn-primary">LOGIN</Link>
                     )}

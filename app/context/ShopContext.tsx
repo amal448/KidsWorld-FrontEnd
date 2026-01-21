@@ -1,5 +1,6 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { toast } from 'sonner';
 
 export type CartItem = {
     id: string; // Unified to string for MongoDB
@@ -47,16 +48,19 @@ export const ShopProvider = ({ children }: { children: ReactNode }) => {
         setCartItems((prev) => {
             const existing = prev.find((i) => i.id === item.id);
             if (existing) {
+                toast.success(`Updated quantity for ${item.name}`);
                 return prev.map((i) =>
                     i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
                 );
             }
+            toast.success(`Added ${item.name} to cart`);
             return [...prev, { ...item, quantity: 1 }];
         });
     };
 
     const removeFromCart = (id: string) => {
         setCartItems((prev) => prev.filter((item) => item.id !== id));
+        toast.info("Item removed from cart");
     };
 
     const updateQuantity = (id: string, quantity: number) => {
@@ -67,7 +71,10 @@ export const ShopProvider = ({ children }: { children: ReactNode }) => {
         );
     };
 
-    const clearCart = () => setCartItems([]);
+    const clearCart = () => {
+        setCartItems([]);
+        toast.info("Cart cleared");
+    };
 
 
     const getItemQuantity = (id: string) => {

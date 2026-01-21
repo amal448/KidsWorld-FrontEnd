@@ -37,4 +37,29 @@ export const productService = {
         return data.products || [];
     },
 
+    createProduct: async (data: any) => {
+        const res = await apiFetch('/product/new', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+        if (!res.ok) throw new Error('Failed to create product');
+        return res.json();
+    },
+
+    updateProduct: async (id: string, data: any) => {
+        const res = await apiFetch(`/product/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+        if (!res.ok) throw new Error('Failed to update product');
+        return res.json();
+    },
+
+    deleteProduct: async (id: string) => {
+        const res = await apiFetch(`/product/${id}`, {
+            method: 'DELETE',
+        });
+        if (!res.ok) throw new Error('Failed to delete product');
+        return res.json();
+    }
 };

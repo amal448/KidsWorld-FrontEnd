@@ -3,6 +3,7 @@ import MediaCarousel from '@/app/components/products/MediaCarousel';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import AddToCartButton from '@/app/components/AddToCartButton';
+
 interface Props {
     params: Promise<{ id: string }>;
 }
